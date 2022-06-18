@@ -33,17 +33,17 @@ myConn.row_factory = sqlite3.Row
 cur = myConn.cursor()
 
 
-def fillPosts():
-    letters = string.ascii_letters
-    for i in range(100):
-        myId = random.choice([3, 4])
-        myTitle = ''.join([random.choice(letters) for j in range(10)])
-        myBody = ''.join([random.choice(letters) for j in range(100)])
-        myCategory = random.choice(["Story", "Funny", "Serious", "Hot Take", "Advice", "Question"])
-        myTimestamp = datetime.now()
-        cur.execute("INSERT INTO posts (posterID, title, body, category, timestamp) VALUES (?, ?, ?, ?, ?)", (myId, myTitle, myBody, myCategory, myTimestamp))
-        myConn.commit()
-fillPosts()
+# def fillPosts():
+#     letters = string.ascii_letters
+#     for i in range(100):
+#         myId = random.choice([3, 4])
+#         myTitle = ''.join([random.choice(letters) for j in range(10)])
+#         myBody = ''.join([random.choice(letters) for j in range(100)])
+#         myCategory = random.choice(["Story", "Funny", "Serious", "Hot Take", "Advice", "Question"])
+#         myTimestamp = datetime.now()
+#         cur.execute("INSERT INTO posts (posterID, title, body, category, timestamp) VALUES (?, ?, ?, ?, ?)", (myId, myTitle, myBody, myCategory, myTimestamp))
+#         myConn.commit()
+# fillPosts()
 
 @app.after_request
 def after_request(response):
@@ -112,8 +112,14 @@ def login():
     else:
         return render_template("login.html", errMsg = None)
 
-@app.route("/posts")
+@app.route("/posts", methods = ["GET", "POST"])
 def posts():
+    if request.method == "GET":
+        cur.execute("SELECT * FROM posts")
+        rows = [dict(x) for x in cur.fetchall()]
+        myData = rows[:min(len(rows), 25)]
+        return render_template("posts.html", data = myData)
+
     return render_template("posts.html")
 
 @app.route("/write")

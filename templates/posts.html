@@ -4,3 +4,20 @@
     Public Posts
 {% endblock %}
 
+{% block main %}
+    <form id = "searchbar">
+        <div class = "mb-3" style = "display: flex; flex-direction: row; place-items: center">
+            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="query" placeholder="Enter Title" type="text">
+            <button class="btn btn-primary" type="submit">Search</button>
+        </div>
+    </form>
+    <br><hr>
+    {% for row in data %}
+        <div class = "mb-3">
+            <h2> {{ row['title'] }} </h2>
+            <br>
+            <p> {{ row['body'] }} </p>
+        </div>
+        <hr>
+    {% endfor %}
+{% endblock %}
