@@ -7,17 +7,44 @@
 {% block main %}
     <form id = "searchbar">
         <div class = "mb-3" style = "display: flex; flex-direction: row; place-items: center">
-            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="query" placeholder="Enter Title" type="text">
+            <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="query" placeholder="Enter Poster" id = "poster" type="text">
             <button class="btn btn-primary" type="submit">Search</button>
         </div>
     </form>
     <br><hr>
-    {% for row in data %}
+    <div class = "container-fluid text-left">
+        {% for row in data %}
         <div class = "mb-3">
             <h2> {{ row['title'] }} </h2>
-            <br>
+            <p> <small> {{ row['poster'] }} | {{ row['timestamp'] }} | {{ row['category'] }} </small></p>
             <p> {{ row['body'] }} </p>
         </div>
         <hr>
-    {% endfor %}
+        {% endfor %}
+    </div>
+
+    <script>
+        let searchForm = document.querySelector("#searchbar");
+        searchForm.addEventListener("submit", function()
+        {
+            console.log("hiEarlier");
+            var posterQ = document.querySelector("#poster");
+            var fData = new FormData();
+            fData.append("poster", posterQ.value);
+            fetch("/posts", {
+                method: "POST",
+                body: fData
+            })
+            .then(response => response.json())
+            .then(function(data)
+            {
+                console.log("hi");
+                console.log(data);
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        })
+    </script>
+
 {% endblock %}

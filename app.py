@@ -10,6 +10,7 @@ from sqlite3 import Error
 import helpers
 import string
 import random
+import json
 
 def create_connection(db_file):
     """ create a database connection to a SQLite database """
@@ -32,6 +33,15 @@ myConn = create_connection(r"/mnt/c/Users/aepst/Documents/Projects/Project1/proj
 myConn.row_factory = sqlite3.Row
 cur = myConn.cursor()
 
+def queryDB(query, vals = ()):
+    myConn = create_connection(r"/mnt/c/Users/aepst/Documents/Projects/Project1/proj1.db")
+    myConn.row_factory = sqlite3.Row
+    cur = myConn.cursor()
+    cur.execute(query, vals)
+    myConn.commit()
+    answer = cur.fetchall()
+    myConn.close()
+    return answer
 
 # def fillPosts():
 #     letters = string.ascii_letters
@@ -56,36 +66,33 @@ def after_request(response):
 @helpers.login_required
 def index():
     myId = session.get("user_id")
-    print(myId)
-    cur.execute("SELECT username FROM users WHERE id = ?", (myId,))
-    rows = cur.fetchall()
+    #print(myId)
+    rows = queryDB("SELECT username FROM users WHERE id = ?", (myId,))
     if len(rows) == 0:
         return redirect("/login")
-    print(rows)
+    #print(rows)
     #print(dict(rows[0]))
     uname = dict(rows[0])['username']
-    print(dict(rows[0]))
+    #print(dict(rows[0]))
     return render_template('index.html', myName = uname)
 
 
 @app.route("/signup", methods = ["GET", "POST"])
 def signup():
-    print("HI")
+    #print("HI")
     if request.method == "POST":
-        print(request.form)
+        #print(request.form)
         myUsername = request.form.get("username")
         myPassword = request.form.get("password")
         myConf = request.form.get("confirmation")
-        cur.execute("SELECT username FROM users")
-        pastNames = cur.fetchall()
-        print(pastNames)
+        pastNames = queryDB("SELECT username FROM users")
+        #print(pastNames)
         msg = helpers.checkReg(myUsername, myPassword, myConf, pastNames)
         if msg != "Good":
             return render_template("signup.html", errMsg = msg)
         else:
             myHash = generate_password_hash(myPassword)
-            cur.execute("INSERT INTO users (username, hash) VALUES (?, ?)", (myUsername, myHash))
-            myConn.commit()
+            wueryDB("INSERT INTO users (username, hash) VALUES (?, ?)", (myUsername, myHash))
             return redirect("/")
     else:
         return render_template("signup.html", errMsg = None)
@@ -98,12 +105,12 @@ def login():
     if request.method == "POST":
         myName = request.form.get("username")
         myPword = request.form.get("password")
-        print(myName, myPword)
+        #print(myName, myPword)
         if myName is None or len(myName) == 0 or myPword is None or len(myPword) == 0:
             return render_template("login.html", errMsg = "Please complete all sections")
-        cur.execute("SELECT * FROM users WHERE username = ?", (myName,))
-        rows = [dict(x) for x in cur.fetchall()]
-        print(rows)
+        rows = queryDB("SELECT * FROM users WHERE username = ?", (myName,))
+        rows = [dict(x) for x in rows]
+        #print(rows)
         if len(rows) != 1 or not check_password_hash(rows[0]['hash'], myPword):
             return render_template("login.html", errMsg = "Invalid username and/or password")
         
@@ -114,13 +121,48 @@ def login():
 
 @app.route("/posts", methods = ["GET", "POST"])
 def posts():
+    print("GOTTEENNN")
     if request.method == "GET":
-        cur.execute("SELECT * FROM posts")
-        rows = [dict(x) for x in cur.fetchall()]
+        print("GOTTEN")
+        rows = queryDB("SELECT * FROM posts")
+        rows = [dict(x) for x in rows]
+        for row in rows:
+            posterId = row['posterID']
+            #print("posterID", posterId)
+            answer = queryDB("SELECT username FROM users where id = ?", (posterId,))
+            answer = dict(answer[0])['username']
+            row['poster'] = answer
         myData = rows[:min(len(rows), 25)]
+        #print(myData)
         return render_template("posts.html", data = myData)
-
-    return render_template("posts.html")
+    else:
+        print(request.form.get("poster"))
+        p = request.form.get("poster")
+        rows = []
+        if p == "":
+            rows = queryDB("SELECT * FROM posts")
+        else: 
+            answer = queryDB("SELECT id FROM users WHERE username = ?", (p,))
+            posterId = 0
+            if len(answer) == 0:
+                print("None found")
+                return "None found"
+            else:
+                posterId = dict(answer[0])["id"]
+            print(posterId)
+            rows = queryDB("SELECT * FROM posts WHERE posterId = ?", (posterId,))
+        rows = [dict(x) for x in rows]
+        for row in rows:
+            posterId = row['posterID']
+            #print("posterID", posterId)
+            answer = queryDB("SELECT username FROM users where id = ?", (posterId,))
+            answer = dict(answer[0])['username']
+            row['poster'] = answer
+        myData = rows[:min(len(rows), 25)]
+        print("almostdone")
+        print(myData)
+        print(json.dumps(myData))
+        return json.dumps(myData)
 
 @app.route("/write")
 def write():
