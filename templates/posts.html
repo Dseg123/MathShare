@@ -5,25 +5,83 @@
 {% endblock %}
 
 {% block main %}
-    <form id = "searchbar">
-        <div class = "mb-3" style = "display: flex; flex-direction: row; place-items: center">
+    <form id = "searchbar" class = "row text-center" action="javascript:void(0);">
+        <div class="col-auto">
             <input autocomplete="off" autofocus class="form-control mx-auto w-auto" name="query" placeholder="Enter Poster" id = "poster" type="text">
-            <button class="btn btn-primary" type="submit">Search</button>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary mb-3" type = "submit">Search</button>
         </div>
     </form>
-    <br><hr>
-    <div class = "container-fluid text-left">
-        {% for row in data %}
-        <div class = "mb-3">
-            <h2> {{ row['title'] }} </h2>
-            <p> <small> {{ row['poster'] }} | {{ row['timestamp'] }} | {{ row['category'] }} </small></p>
-            <p> {{ row['body'] }} </p>
-        </div>
-        <hr>
-        {% endfor %}
+    <p class = "item-count"></p>
+    <button class = "btn btn-primary prev-button"> Previous </button>
+    <button class = "btn btn-primary next-button"> Next </button>
+    <br>
+    <hr>
+    <div class = "container-fluid text-left" id = "post-list">
     </div>
-
+    <button class = "btn btn-primary prev-button"> Previous </button>
+    <button class = "btn btn-primary next-button"> Next </button>
     <script>
+        const MAX_POSTS = 25;
+
+        function makePost(newPost)
+        {
+            let myPost = document.createElement("div");
+            myPost.classList.add("user-post")
+            myPost.classList.add("mb-3");
+            let myHead = document.createElement("h2");
+            myHead.innerHTML = newPost["title"];
+            let mySmall = document.createElement("p");
+            mySmall.innerHTML = `<small> ${newPost["poster"]} | ${newPost["timestamp"]} | ${newPost["category"]} </small>`;
+            let myBody = document.createElement("p");
+            myBody.innerHTML = newPost["body"]
+            myPost.appendChild(myHead);
+            myPost.appendChild(mySmall);
+            myPost.appendChild(myBody);
+            console.log(myPost);
+            return myPost;
+        }
+        
+        function replacePosts(newPosts)
+        {
+            let oldPosts = document.querySelectorAll(".user-post");
+            oldPosts.forEach(function(oldPost)
+            {
+                oldPost.parentNode.removeChild(oldPost);
+            });
+
+            let postSpace = document.querySelector("#post-list");
+            newPosts.forEach(function(newPost){
+                let myPost = makePost(newPost);
+                postSpace.appendChild(myPost);
+            });
+            console.log(postSpace);
+        }
+        
+        let pointer = 0;
+        let myData = [];
+        var fData = new FormData();
+        fData.append("poster", "");
+        fetch("/posts", {
+            method: "POST",
+            body: fData
+            })
+            .then(response => response.json())
+            .then(function(data) {
+                pointer = 0;
+                myData = data;
+                let numEntries = myData.length;
+                let start = pointer * MAX_POSTS;
+                let end = Math.min(start + MAX_POSTS, numEntries);
+                replacePosts(myData.slice(start, end));
+                let counter = document.querySelector(".item-count");
+                counter.innerHTML = `${start + 1}-${end} out of ${numEntries} results`;
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+
         let searchForm = document.querySelector("#searchbar");
         searchForm.addEventListener("submit", function()
         {
@@ -34,17 +92,60 @@
             fetch("/posts", {
                 method: "POST",
                 body: fData
-            })
-            .then(response => response.json())
-            .then(function(data)
+                })
+                .then(response => response.json())
+                .then(function(data) {
+                    pointer = 0;
+                    myData = data;
+                    let numEntries = myData.length;
+                    let start = pointer * MAX_POSTS;
+                    let end = Math.min(start + MAX_POSTS, numEntries);
+                    replacePosts(myData.slice(start, end));
+                    let counter = document.querySelector(".item-count");
+                    counter.innerHTML = `${start + 1}-${end} out of ${numEntries} results`;
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        });
+
+        let nextButtons = document.querySelectorAll(".next-button");
+        nextButtons.forEach(function(button)
+        {
+            button.addEventListener("click", function()
             {
-                console.log("hi");
-                console.log(data);
-            })
-            .catch((error) => {
-                console.error('Error:', error);
+                console.log("hiEarlier");
+                let numEntries = myData.length;
+                if ((pointer + 1) * MAX_POSTS < numEntries)
+                {
+                    pointer = pointer + 1;
+                    let start = pointer * MAX_POSTS;
+                    let end = Math.min(start + MAX_POSTS, numEntries);
+                    replacePosts(myData.slice(start, end));
+                    let counter = document.querySelector(".item-count");
+                    counter.innerHTML = `${start + 1}-${end} out of ${numEntries} results`;
+                }
             });
-        })
+        });
+
+        let prevButtons = document.querySelectorAll(".prev-button");
+        prevButtons.forEach(function(button)
+        {
+            button.addEventListener("click", function()
+            {
+                console.log("hiEarlier");
+                let numEntries = myData.length;
+                if (pointer > 0)
+                {
+                    pointer = pointer - 1;
+                    let start = pointer * MAX_POSTS;
+                    let end = Math.min(start + MAX_POSTS, numEntries);
+                    replacePosts(myData.slice(start, end));
+                    let counter = document.querySelector(".item-count");
+                    counter.innerHTML = `${start + 1}-${end} out of ${numEntries} results`;
+                }
+            });
+        });
     </script>
 
 {% endblock %}

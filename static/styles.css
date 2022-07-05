@@ -2,3 +2,19 @@
 {
     color: red;
 }
+
+.form-inline {
+    display: flex;
+    flex-flow: row wrap;
+    align-items: center;
+  }
+
+.user-post {
+    border: 2px solid black;
+    border-radius: 5px;
+
+}
+
+p {
+    word-break: break-all;
+}

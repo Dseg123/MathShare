@@ -146,7 +146,7 @@ def posts():
             posterId = 0
             if len(answer) == 0:
                 print("None found")
-                return "None found"
+                return json.dumps([])
             else:
                 posterId = dict(answer[0])["id"]
             print(posterId)
@@ -158,10 +158,12 @@ def posts():
             answer = queryDB("SELECT username FROM users where id = ?", (posterId,))
             answer = dict(answer[0])['username']
             row['poster'] = answer
-        myData = rows[:min(len(rows), 25)]
+        myData = rows
         print("almostdone")
         print(myData)
         print(json.dumps(myData))
+        print(type(json.dumps(myData)))
+        print("YOOOOOOOOO")
         return json.dumps(myData)
 
 @app.route("/write")
