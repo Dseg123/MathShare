@@ -3,3 +3,59 @@
 {% block title %}
     Write a Post
 {% endblock %}
+
+{% block main %}
+    <form id="post-box" action="javascript:void(0);">
+        <label for="category"> Choose category: </label>
+        <select name="category" id="category" required>
+            <option value="None" disabled selected> </option>
+            <option value="0">Hot Take</option>
+            <option value="1">Funny</option>
+            <option value="2">Advice</option>
+            <option value="3">Story</option>
+            <option value="4">Serious</option>
+        </select>
+        <br>
+        <input id="post-title" type="text" placeholder="Enter your post title">
+        <br>
+        <textarea id="post-text" rows="4" cols="50" placeholder="Enter your post body" required></textarea>
+        <input type = "reset" id = "reset-button" hidden>
+        <button type="submit" id = "submit-button" class="btn btn-primary mb-3" type = "submit">Submit Post</button>
+    </form>
+
+    <div id="after-submit" hidden>
+        Thanks for submitting! <br><br>
+
+        <button id = "another-post" class="btn btn-primary mb-3">Make Another Post</button>
+    </div>
+    
+    <script>
+        document.querySelector("#post-box").addEventListener("submit", async function() {
+            document.querySelector("#submit-button").disabled = true;
+            var fData = new FormData();
+            fData.append("category", document.querySelector("#category").value);
+            fData.append("text", document.querySelector("#post-text").value);
+            fData.append("title", document.querySelector("#post-title").value);
+            const response = await fetch("/write", {
+                method: "POST",
+                body: fData
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+            document.querySelector("#post-box").hidden = true;
+            document.querySelector("#after-submit").hidden = false;
+        });
+
+        document.querySelector("#another-post").addEventListener("click", function() {
+            document.querySelector("#after-submit").hidden = true;
+            document.querySelector("#reset-button").click();
+            document.querySelector("#post-box").hidden = false;
+        });
+    </script>
+
+
+    
+
+
+{% endblock %}

@@ -43,6 +43,7 @@ def queryDB(query, vals = ()):
     myConn.close()
     return answer
 
+CATEGORIES = ["Hot Take", "Funny", "Advice", "Story", "Serious"]
 # def fillPosts():
 #     letters = string.ascii_letters
 #     for i in range(100):
@@ -132,7 +133,7 @@ def posts():
             answer = queryDB("SELECT username FROM users where id = ?", (posterId,))
             answer = dict(answer[0])['username']
             row['poster'] = answer
-        myData = rows[:min(len(rows), 25)]
+        myData = rows
         #print(myData)
         return render_template("posts.html", data = myData)
     else:
@@ -166,8 +167,17 @@ def posts():
         print("YOOOOOOOOO")
         return json.dumps(myData)
 
-@app.route("/write")
+@app.route("/write", methods = ["GET", "POST"])
 def write():
+    if request.method == "POST":
+        category = request.form.get("category")
+        category = CATEGORIES[int(category)]
+        text = request.form.get("text")
+        title = request.form.get("title")
+        posterID = session.get("user_id")
+        timestamp = datetime.now()
+        queryDB("INSERT INTO posts (posterID, title, body, category, timestamp) VALUES (?, ?, ?, ?, ?)", (posterID, title, text, category, timestamp))
+        return "200"
     return render_template("write.html")
 
 @app.route("/profile")
